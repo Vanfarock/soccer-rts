@@ -4,7 +4,7 @@
 
 **Engine:** Python + Pygame
 **Camera:** Top-down tactical (live tactics-board view)
-**MVP Scope:** Player's team vs. a scripted AI opponent
+**MVP Scope (current):** Phase 0 manual-control sandbox — focus, move, pass/toss, receive. Full vision (commands, autonomous agents, opponent) is layered on per §6.
 
 ---
 
@@ -107,27 +107,34 @@ Confirmed priority: prove autonomous agent behavior is fun _by itself_ before ad
 
 This phase is pure engineering scaffolding, not a "fun test" — Phase 1 is where the real design question gets answered. The goal here is to build and feel the core verbs (move, kick, pass, receive) yourself before an AI has to decide when to use them, so any bugs are obviously physics bugs, not decision bugs.
 
-**Key architecture decision:** separate _actions_ from _input source_, so this code is not throwaway:
+**Key architecture decision:** separate _actions_ from _input source_, so this code is not throwaway. Implemented as layered packages (see §7.1):
 
 ```python
-class Player:
-    def move(self, direction_vector): ...
-    def kick_ball(self, ball, power, target_direction): ...
-    def receive_pass(self, ball): ...
+# domain/player — identity, pose, facing (no ball rules)
+class Player(GameObject): ...
 
-class KeyboardController:
-    def update(self, player, keys):
-        # WASD -> player.move(), Space/click -> player.kick_ball()
-        ...
+# domain/ball — velocity, carrier ref (GameObject), physics component
+class Ball(GameObject): ...
 
-class AIController:
-    def update(self, player, world_state):
-        # Phase 1 drop-in replacement: utility AI (§7.3) calls the
-        # exact same player.move() / player.kick_ball() methods
+# application/possession — sole place that knows both Player and Ball
+class PossessionService:
+    @staticmethod
+    def try_receive(player, ball): ...
+    @staticmethod
+    def kick(player, ball, power): ...
+
+class KeyboardControllerComponent:
+    def update(self, ctx):
+        PossessionService.try_receive(player, ball)
+        # WASD handled by PlayerMovementComponent; Space/RMB -> PossessionService.kick
+
+class AIController:  # Phase 1 drop-in
+    def update(self, ctx):
+        # same PossessionService / movement hooks, different decision source
         ...
 ```
 
-In Phase 1, `KeyboardController` is swapped for `AIController` — the `Player`/`Ball` code underneath doesn't change. That's what makes this phase worth building properly instead of hacking together something disposable.
+In Phase 1, `KeyboardControllerComponent` is swapped for an AI controller — domain entities and `PossessionService` stay unchanged.
 
 **Build list:**
 
@@ -135,9 +142,10 @@ In Phase 1, `KeyboardController` is swapped for `AIController` — the `Player`/
 2. Pitch rendering (rectangle, lines, goal areas — unused for now)
 3. `Ball` class: position, velocity, friction, boundary bounce
 4. `Player` class: position, velocity, acceleration/max-speed, facing direction, collision radius
-5. `KeyboardController`: WASD → `move()`, Space/click → `kick_ball()` when near the ball
-6. Basic kick physics: kick sets ball velocity from power + direction
-7. _(Optional, cheap, worth it)_ a second manually-controlled player on arrow keys, so you can test **passing** between two human-controlled dots before any AI exists — this validates the pass mechanic's feel independently of decision-making.
+5. `KeyboardControllerComponent`: WASD → movement; Space/click → `PossessionService.kick()` when in possession
+6. **Focus control:** Tab focuses ball carrier; number keys select a home player; only the focused player accepts input
+7. Basic kick physics: kick sets ball velocity from power + facing direction; charged pass (RMB hold) shows aim overlay
+8. _(Optional, cheap, worth it)_ a second manually-controlled player on arrow keys, so you can test **passing** between two human-controlled dots before any AI exists — this validates the pass mechanic's feel independently of decision-making.
 
 **Goal:** the foundation renders, moving/kicking/passing feels physically right, and the action layer is ready for an AI brain to plug into.
 
@@ -176,26 +184,29 @@ In Phase 1, `KeyboardController` is swapped for `AIController` — the `Player`/
 
 ## 7. Technical Starter Guide (Pygame)
 
-### 7.1 Project structure (suggested)
+### 7.1 Project structure (implemented)
+
+Code lives under `src/` with explicit layers. **`AGENTS.md`** is the source of truth for import rules; this section summarizes layout for design context.
 
 ```
-rts_soccer/
-├── main.py                 # game loop, window, clock
-├── entities/
-│   ├── ball.py
-│   ├── player.py            # Agent class
-│   └── team.py
-├── ai/
-│   ├── decision.py          # utility-based decision engine
-│   ├── behaviors.py         # steering behaviors (seek, arrive, intercept)
-│   └── commands.py          # command definitions + FP system
-├── tactics/
-│   └── philosophy.py        # trigger -> response pattern system
-├── rendering/
-│   ├── pitch.py
-│   └── hud.py                # command panel, FP bar, minimap overlay
-└── config.py                 # tunable constants
+src/
+├── main.py
+├── shared/                  # colors, entity sizes (no src deps)
+├── infra/engine/            # GameObject, Component, window, render, collision
+├── domain/
+│   ├── player/              # Player entity
+│   ├── ball/                # Ball + BallPhysicsComponent
+│   ├── pitch/               # Pitch markings, DRAG constant
+│   └── team/                # Team enum
+└── application/
+    ├── game.py              # composition root, spawn, outer loop
+    ├── possession.py        # kick / receive / attach (knows Player + Ball)
+    └── components/          # keyboard, movement, focus, ball_receiver
 ```
+
+**Layer dependency:** `shared ← infra ← domain ← application ← main`. Domain siblings (`player`, `ball`, …) do not import each other; cross-entity flows (possession) live in `application/possession.py`.
+
+Planned additions (not yet present): `ai/` (decision, behaviors), `tactics/` (philosophy), HUD overlay — see roadmap §6.
 
 ### 7.2 Movement — Steering Behaviors
 

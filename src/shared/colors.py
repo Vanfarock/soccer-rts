@@ -18,6 +18,9 @@ class Color:
     PITCH_BG: ClassVar["Color"]
     PITCH_SURFACE: ClassVar["Color"]
 
+    TEAM_HOME: ClassVar["Color"]
+    TEAM_AWAY: ClassVar["Color"]
+
     def __init__(self, r: int, g: int, b: int):
         self.r = r
         self.g = g
@@ -41,3 +44,5 @@ Color.GRAY = Color(128, 128, 128)
 Color.LIGHT_GRAY = Color(200, 200, 200)
 Color.PITCH_BG = Color(24, 32, 48)
 Color.PITCH_SURFACE = Color(34, 48, 64)
+Color.TEAM_HOME = Color(65, 105, 225)
+Color.TEAM_AWAY = Color(220, 53, 69)

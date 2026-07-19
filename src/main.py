@@ -1,4 +1,4 @@
-from game.game import Game
+from application.game import Game
 
 
 def main():
