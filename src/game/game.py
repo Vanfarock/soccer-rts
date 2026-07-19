@@ -2,8 +2,11 @@ import pygame
 
 from engine.clock import Clock
 from engine.engine import Engine
+from engine.vector import Vector2D
 from engine.window import Window
 from pitch.pitch import Pitch
+from player.player import Player
+from team.team import Team
 
 
 class Game:
@@ -15,7 +18,16 @@ class Game:
             antialiasing=True,
             aa_factor=2,
         )
-        self._engine.add_game_object(Pitch(window))
+
+        pitch = Pitch(window)
+        pitch.add_child(
+            Player(
+                Vector2D(Pitch.WIDTH / 2, Pitch.HEIGHT / 2),
+                Team.HOME,
+            )
+        )
+
+        self._engine.add_game_object(pitch)
 
         self._running = True
 

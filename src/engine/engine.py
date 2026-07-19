@@ -32,7 +32,7 @@ class Engine:
 
     def _render_to(self, target) -> None:
         for game_object in self._game_objects:
-            game_object.render(target)
+            game_object.render_tree(target)
 
     def update(
         self, pressed_keys: ScancodeWrapper, pressed_mouse: tuple[bool, bool, bool]

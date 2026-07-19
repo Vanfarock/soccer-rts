@@ -17,8 +17,14 @@ class Vector2D:
     def __sub__(self, other: "Vector2D") -> "Vector2D":
         return Vector2D(self._x - other._x, self._y - other._y)
 
-    def __mul__(self, other: "Vector2D") -> "Vector2D":
-        return Vector2D(self._x * other._x, self._y * other._y)
+    def __mul__(self, other: "Vector2D | float") -> "Vector2D":
+        if isinstance(other, Vector2D):
+            return Vector2D(self._x * other._x, self._y * other._y)
+
+        return Vector2D(self._x * other, self._y * other)
+
+    def __rmul__(self, other: float) -> "Vector2D":
+        return Vector2D(self._x * other, self._y * other)
 
     def __truediv__(self, other: "Vector2D") -> "Vector2D":
         return Vector2D(self._x / other._x, self._y / other._y)

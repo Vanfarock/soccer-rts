@@ -33,27 +33,57 @@ class GameObject:
         self._border_radius = border_radius
         self._scale = 1.0
         self._offset = Vector2D(0, 0)
+        self._parent: GameObject | None = None
+        self._children: list[GameObject] = []
 
         self._validate_init()
+
+    def add_child(self, child: GameObject) -> None:
+        if child._parent is self:
+            return
+
+        if child._parent is not None:
+            child._parent._children.remove(child)
+
+        child._parent = self
+        self._children.append(child)
 
     def set_transform(self, scale: float, offset: Vector2D) -> None:
         self._scale = scale
         self._offset = offset
 
+    def _effective_transform(self) -> tuple[float, Vector2D]:
+        if self._parent is None:
+            return self._scale, self._offset
+
+        parent_scale, parent_offset = self._parent._effective_transform()
+        return (
+            parent_scale * self._scale,
+            parent_offset + self._offset * parent_scale,
+        )
+
     def world_to_screen(self, pos: Vector2D) -> Vector2D:
+        scale, offset = self._effective_transform()
         return Vector2D(
-            self._offset.x + pos.x * self._scale,
-            self._offset.y + pos.y * self._scale,
+            offset.x + pos.x * scale,
+            offset.y + pos.y * scale,
         )
 
     def screen_to_world(self, pos: Vector2D) -> Vector2D:
+        scale, offset = self._effective_transform()
         return Vector2D(
-            (pos.x - self._offset.x) / self._scale,
-            (pos.y - self._offset.y) / self._scale,
+            (pos.x - offset.x) / scale,
+            (pos.y - offset.y) / scale,
         )
 
     def world_size_to_screen(self, size: Vector2D) -> Vector2D:
-        return Vector2D(size.x * self._scale, size.y * self._scale)
+        scale, _ = self._effective_transform()
+        return Vector2D(size.x * scale, size.y * scale)
+
+    def render_tree(self, target: RenderTarget) -> None:
+        self.render(target)
+        for child in self._children:
+            child.render_tree(target)
 
     def _validate_init(self) -> None:
         if (
