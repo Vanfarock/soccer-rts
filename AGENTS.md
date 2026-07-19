@@ -57,6 +57,26 @@ shared ← infra ← domain ← application ← main
 | Keyboard handling, focus switching, kick/receive flow | `application/` or `application/components/` |
 | Spawning entities, wiring the match loop | `application/game.py` |
 
+## Colors
+
+All RGB values belong in `shared/colors.py` as named `Color.*` constants — never inline `Color(r, g, b)` elsewhere.
+
+- Define `ClassVar` annotations on `Color`, then assign at module bottom (same pattern as `Color.PITCH_BG`, `Color.TEAM_HOME`).
+- Use domain-prefixed names for game-specific colors (`PITCH_*`, `TEAM_*`, etc.).
+- Everywhere else, reference the constant (e.g. `Color.TEAM_HOME`, not `Color(65, 105, 225)`).
+
+```python
+# shared/colors.py
+Color.TEAM_HOME = Color(65, 105, 225)
+
+# domain/team/team.py
+"home": Color.TEAM_HOME,
+```
+
+## Dev workflow
+
+Before treating work as done, run `make style` and ensure it passes (ruff format, ruff check, ty check).
+
 ## Doc roles
 
 - **`docs/GDD.md`** — game design: mechanics, roadmap, vision, tunables.
