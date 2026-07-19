@@ -65,7 +65,7 @@ class Game:
         )
 
         center = Vector2D(Pitch.WIDTH / 2, Pitch.HEIGHT / 2)
-        ball = Ball(center, Pitch.DRAG)
+        ball = Ball(center, Pitch.DRAG, Vector2D(Pitch.WIDTH, Pitch.HEIGHT))
 
         player = _create_player(center, Team.HOME, ball=ball, number=1)
         teammate = _create_player(

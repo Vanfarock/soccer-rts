@@ -1,5 +1,6 @@
 import math
 
+from domain.ball.boundary import resolve_pitch_bounds
 from infra.engine.entity import Component, GameObject, GameObjectType
 from infra.engine.frame_context import FrameContext
 from infra.engine.primitives.ellipse import Ellipse
@@ -10,9 +11,12 @@ from shared.entity_sizes import BALL_ATTACH_GAP, BALL_RADIUS, PLAYER_RADIUS
 
 
 class BallPhysicsComponent(Component):
-    def __init__(self, drag: float) -> None:
+    BOUNCE_RESTITUTION = 0.75
+
+    def __init__(self, drag: float, pitch_size: Vector2D) -> None:
         super().__init__()
         self._drag = drag
+        self._pitch_size = pitch_size
 
     def update(self, ctx: FrameContext) -> None:
         ball = self.owner
@@ -23,7 +27,17 @@ class BallPhysicsComponent(Component):
             ball.sync_to_carrier()
             return
 
-        ball.set_pos(ball.pos + ball.velocity * ctx.dt)
+        next_pos = ball.pos + ball.velocity * ctx.dt
+        next_pos, next_velocity = resolve_pitch_bounds(
+            next_pos,
+            ball.velocity,
+            Ball.RADIUS,
+            self._pitch_size.x,
+            self._pitch_size.y,
+            restitution=BallPhysicsComponent.BOUNCE_RESTITUTION,
+        )
+        ball.set_pos(next_pos)
+        ball.set_velocity(next_velocity)
 
         if ball.velocity.length_squared() < 1e-6:
             ball.set_velocity(Vector2D(0, 0))
@@ -40,14 +54,14 @@ class Ball(GameObject):
     RADIUS = BALL_RADIUS
     ATTACH_GAP = BALL_ATTACH_GAP
 
-    def __init__(self, pos: Vector2D, drag: float):
+    def __init__(self, pos: Vector2D, drag: float, pitch_size: Vector2D):
         super().__init__(
             type=GameObjectType.CUSTOM,
             pos=pos,
         )
         self._velocity = Vector2D(0, 0)
         self._carrier: GameObject | None = None
-        self.add_component(BallPhysicsComponent(drag))
+        self.add_component(BallPhysicsComponent(drag, pitch_size))
 
     @property
     def velocity(self) -> Vector2D:

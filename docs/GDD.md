@@ -140,7 +140,7 @@ In Phase 1, `KeyboardControllerComponent` is swapped for an AI controller — do
 
 1. Window + fixed-timestep game loop
 2. Pitch rendering (rectangle, lines, goal areas — unused for now)
-3. `Ball` class: position, velocity, friction, boundary bounce
+3. `Ball` class: position, velocity, friction, boundary bounce _(touchlines use bounce as a Phase 0 placeholder; throw-ins replace left/right `EdgeResponse.BOUNCE` later — see `domain/ball/boundary.py`)_
 4. `Player` class: position, velocity, acceleration/max-speed, facing direction, collision radius
 5. `KeyboardControllerComponent`: WASD → movement; Space/click → `PossessionService.kick()` when in possession
 6. **Focus control:** Tab focuses ball carrier; number keys select a home player; only the focused player accepts input
@@ -171,6 +171,7 @@ In Phase 1, `KeyboardControllerComponent` is swapped for an AI controller — do
 ### Phase 4 — Goals & Scoring
 
 - Add goal areas, scoring, win/loss state, and the `MATCH_DURATION_SECONDS` countdown (default 10 min, configurable)
+- Replace touchline boundary bounce with **throw-ins** (and goal-line restarts: goal kicks, corners) — wired via `EdgeResponse.OUT_OF_PLAY` in `domain/ball/boundary.py`
 - **Goal:** the loop now has stakes — commands and positioning finally matter toward an outcome.
 
 ### Phase 5 — Philosophy/Pattern System (stretch, post-MVP)
