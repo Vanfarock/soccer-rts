@@ -14,6 +14,7 @@ from shared.colors import Color
 class Pitch(GameObject):
     WIDTH = 1050
     HEIGHT = 680
+    DRAG = 2.5
     PENALTY_BOX_DEPTH = 165
     PENALTY_BOX_WIDTH = 403
     GOAL_AREA_DEPTH = 55

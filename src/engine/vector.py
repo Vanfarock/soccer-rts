@@ -32,5 +32,18 @@ class Vector2D:
     def __floordiv__(self, other: "Vector2D") -> "Vector2D":
         return Vector2D(self._x // other._x, self._y // other._y)
 
+    def length(self) -> float:
+        return (self._x**2 + self._y**2) ** 0.5
+
+    def length_squared(self) -> float:
+        return self._x**2 + self._y**2
+
+    def normalized(self) -> "Vector2D":
+        length = self.length()
+        if length < 1e-9:
+            return Vector2D(0, 0)
+
+        return Vector2D(self._x / length, self._y / length)
+
     def to_tuple(self) -> tuple[float, float]:
         return (self._x, self._y)

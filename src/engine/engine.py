@@ -37,7 +37,10 @@ class Engine:
             game_object.render_tree(target)
 
     def update(
-        self, pressed_keys: ScancodeWrapper, pressed_mouse: tuple[bool, bool, bool]
+        self,
+        pressed_keys: ScancodeWrapper,
+        pressed_mouse: tuple[bool, bool, bool],
+        mouse_pos: Vector2D,
     ) -> bool:
         if pressed_keys[pygame.K_ESCAPE]:
             return False
@@ -45,6 +48,7 @@ class Engine:
         ctx = FrameContext(
             pressed_keys=pressed_keys,
             pressed_mouse=pressed_mouse,
+            mouse_pos=mouse_pos,
             dt=self._clock.tick(),
         )
 
