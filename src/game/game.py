@@ -1,6 +1,8 @@
 import pygame
 
 from engine.clock import Clock
+from engine.components.collider import ColliderComponent, ColliderMode, ColliderShape
+from engine.components.movable import MovableComponent
 from engine.engine import Engine
 from engine.vector import Vector2D
 from engine.window import Window
@@ -20,12 +22,28 @@ class Game:
         )
 
         pitch = Pitch(window)
-        pitch.add_child(
-            Player(
-                Vector2D(Pitch.WIDTH / 2, Pitch.HEIGHT / 2),
-                Team.HOME,
+        pitch.add_component(
+            ColliderComponent(
+                shape=ColliderShape.RECT,
+                size=Vector2D(Pitch.WIDTH, Pitch.HEIGHT),
+                mode=ColliderMode.TRIGGER,
             )
         )
+
+        player = Player(
+            Vector2D(Pitch.WIDTH / 2, Pitch.HEIGHT / 2),
+            Team.HOME,
+        )
+        player.add_component(MovableComponent(speed=200))
+        player.add_component(
+            ColliderComponent(
+                radius=Player.RADIUS,
+                mode=ColliderMode.SOLID,
+                on_exit=lambda other: print("left pitch bounds"),
+                on_enter=lambda other: print("entered pitch bounds"),
+            )
+        )
+        pitch.add_child(player)
 
         self._engine.add_game_object(pitch)
 

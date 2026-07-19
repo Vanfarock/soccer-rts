@@ -2,8 +2,10 @@ import pygame
 from pygame.key import ScancodeWrapper
 
 from engine.clock import Clock
+from engine.frame_context import FrameContext
 from engine.primitives.game_object import GameObject
 from engine.render_layer import RenderLayer
+from engine.systems.collision import CollisionSystem
 from engine.vector import Vector2D
 from engine.window import Window
 
@@ -40,6 +42,17 @@ class Engine:
         if pressed_keys[pygame.K_ESCAPE]:
             return False
 
+        ctx = FrameContext(
+            pressed_keys=pressed_keys,
+            pressed_mouse=pressed_mouse,
+            dt=self._clock.tick(),
+        )
+
+        for game_object in self._game_objects:
+            game_object.update_tree(ctx)
+
+        CollisionSystem.step(self._game_objects)
+
         screen_width, screen_height = self._window.screen.get_size()
 
         if self._antialiasing and self._aa_factor > 1:
@@ -58,6 +71,5 @@ class Engine:
             self._render_to(self._window)
 
         pygame.display.flip()
-        self._clock.tick()
 
         return True

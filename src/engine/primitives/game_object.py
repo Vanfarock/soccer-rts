@@ -1,9 +1,13 @@
 from abc import abstractmethod
 from enum import Enum
+from typing import TypeVar
 
+from engine.frame_context import FrameContext
 from engine.vector import Vector2D
 from engine.render_target import RenderTarget
 from shared.colors import Color
+
+T = TypeVar("T", bound="Component")
 
 
 class GameObjectType(Enum):
@@ -35,8 +39,53 @@ class GameObject:
         self._offset = Vector2D(0, 0)
         self._parent: GameObject | None = None
         self._children: list[GameObject] = []
+        self._components: list[Component] = []
 
         self._validate_init()
+
+    def add_component(self, component: T) -> T:
+        if component._owner is not None:
+            raise ValueError("Component is already attached to a GameObject")
+
+        component.on_attach(self)
+        self._components.append(component)
+        return component
+
+    def get_component(self, component_type: type[T]) -> T | None:
+        for component in self._components:
+            if isinstance(component, component_type):
+                return component
+
+        return None
+
+    def get_components(self, component_type: type[T]) -> list[T]:
+        return [
+            component
+            for component in self._components
+            if isinstance(component, component_type)
+        ]
+
+    def require_component(self, component_type: type[T]) -> T:
+        component = self.get_component(component_type)
+        if component is None:
+            raise ValueError(f"GameObject is missing required component: {component_type.__name__}")
+
+        return component
+
+    def set_pos(self, pos: Vector2D) -> None:
+        self._pos = pos
+
+    def update_tree(self, ctx: FrameContext) -> None:
+        for component in self._components:
+            component.update(ctx)
+
+        for child in self._children:
+            child.update_tree(ctx)
+
+    def iter_tree(self):
+        yield self
+        for child in self._children:
+            yield from child.iter_tree()
 
     def add_child(self, child: GameObject) -> None:
         if child._parent is self:
@@ -137,3 +186,6 @@ class GameObject:
     @abstractmethod
     def render(self, target: RenderTarget) -> None:
         pass
+
+
+from engine.components.component import Component  # noqa: E402

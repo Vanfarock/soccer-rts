@@ -6,5 +6,5 @@ class Clock:
         self._clock = pygame.time.Clock()
         self._fps = fps
 
-    def tick(self):
-        self._clock.tick(self._fps)
+    def tick(self) -> float:
+        return self._clock.tick(self._fps) / 1000.0
