@@ -21,6 +21,10 @@ class KeyboardControllerComponent(Component):
     AIM_LINE_THICKNESS = 4
     AIM_MARKER_RADIUS = 6
 
+    @property
+    def ball(self) -> Ball:
+        return self._ball
+
     def __init__(self, ball: Ball, drag: float) -> None:
         super().__init__()
         self._ball = ball

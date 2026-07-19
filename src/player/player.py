@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 class Player(GameObject):
     RADIUS = 8
     PICKUP_SLACK = 8
+    BASE_SPEED = 200
+    WITH_BALL_SPEED_FACTOR = 0.8
 
     def __init__(self, pos: Vector2D, team: Team):
         super().__init__(
@@ -24,6 +26,7 @@ class Player(GameObject):
         )
         self._team = team
         self._forward = Vector2D(1, 0)
+        self._pickup_blocked_until_clear = False
 
     @property
     def forward(self) -> Vector2D:
@@ -45,18 +48,31 @@ class Player(GameObject):
     def has_ball(self, ball: Ball) -> bool:
         return ball.carrier is self
 
+    def movement_speed(self, ball: Ball) -> float:
+        speed = Player.BASE_SPEED
+        if self.has_ball(ball):
+            speed *= Player.WITH_BALL_SPEED_FACTOR
+        return speed
+
     def kick_ball(self, ball: Ball, power: float) -> None:
         if not self.has_ball(ball):
             return
 
         ball.detach()
         ball.set_velocity(self._forward * power)
+        self._pickup_blocked_until_clear = True
 
     def try_receive(self, ball: Ball) -> bool:
         if not ball.is_free:
             return False
 
         distance = (ball.pos - self.pos).length()
+
+        if self._pickup_blocked_until_clear:
+            if distance <= self.pickup_radius:
+                return False
+            self._pickup_blocked_until_clear = False
+
         if distance > self.pickup_radius:
             return False
 

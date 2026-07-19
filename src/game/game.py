@@ -36,7 +36,7 @@ class Game:
             Vector2D(Pitch.WIDTH / 2, Pitch.HEIGHT / 2),
             Team.HOME,
         )
-        player.add_component(MovableComponent(speed=200))
+        player.add_component(MovableComponent(speed=Player.BASE_SPEED))
         player.add_component(
             ColliderComponent(
                 radius=Player.RADIUS,
